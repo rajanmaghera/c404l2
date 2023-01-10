@@ -32,7 +32,7 @@ def get_remote_ip(host):
 
 #send data to server
 def send_data(serversocket, payload):
-    print("Sending payload")    
+    print("Sending payload")
     try:
         serversocket.sendall(payload.encode())
     except socket.error:
@@ -54,46 +54,50 @@ def main():
         #set to listening mode
         ins.listen(2)
 
-        #continuously listen for connections
         while True:
+        #continuously listen for connections
             conn, addr = ins.accept()
-            print("Connected by", addr)
+            pid = os.fork()
+            if pid == 0:
 
-            try:
-                #define address info, payload, and buffer size
-                host = 'www.google.com'
-                port = 80
-                payload = f'GET / HTTP/1.0\r\nHost: {host}\r\n\r\n'
-                buffer_size = 4096
+                print("Connected by", addr)
 
-                #make the socket, get the ip, and connect
-                outs = create_tcp_socket()
+                try:
+                    #define address info, payload, and buffer size
+                    host = 'www.google.com'
+                    port = 80
+                    payload = f'GET / HTTP/1.0\r\nHost: {host}\r\n\r\n'
+                    buffer_size = 4096
 
-                remote_ip = get_remote_ip(host)
+                    #make the socket, get the ip, and connect
+                    outs = create_tcp_socket()
 
-                outs.connect((remote_ip , port))
-                print (f'Socket Connected to {host} on ip {remote_ip}')
+                    remote_ip = get_remote_ip(host)
 
-                #send the data and shutdown
+                    outs.connect((remote_ip , port))
+                    print (f'Socket Connected to {host} on ip {remote_ip}')
 
-                full_data = conn.recv(BUFFER_SIZE)
-                send_data(outs, full_data.decode())
-                outs.shutdown(socket.SHUT_WR)
+                    #send the data and shutdown
 
-                #continue accepting data until no more left
-                full_data = b""
-                while True:
-                    data = outs.recv(buffer_size)
-                    if not data:
-                        break
-                    full_data += data
-                conn.sendall(full_data)
-            except Exception as e:
-                print(e)
-            finally:
-                #always close at the end!
-                outs.close()
-                conn.close()
+                    full_data = conn.recv(BUFFER_SIZE)
+                    send_data(outs, full_data.decode())
+                    outs.shutdown(socket.SHUT_WR)
+
+                    #continue accepting data until no more left
+                    full_data = b""
+                    while True:
+                        data = outs.recv(buffer_size)
+                        if not data:
+                            break
+                        full_data += data
+                    conn.sendall(full_data)
+                except Exception as e:
+                    print(e)
+                finally:
+                    #always close at the end!
+                    outs.close()
+                    conn.close()
+            exit(0)
 
 
 if __name__ == "__main__":

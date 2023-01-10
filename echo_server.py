@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import socket
 import time
 
@@ -22,15 +23,18 @@ def main():
         #continuously listen for connections
         while True:
             conn, addr = s.accept()
-            print(conn)
+            pid = os.fork()
+            if pid == 0:
+                print(conn)
 
-            print("Connected by", addr)
-            
-            #recieve data, wait a bit, then send it back
-            full_data = conn.recv(BUFFER_SIZE)
-            time.sleep(0.5)
-            conn.sendall(full_data)
-            conn.close()
+                print("Connected by", addr)
+
+                #recieve data, wait a bit, then send it back
+                full_data = conn.recv(BUFFER_SIZE)
+                time.sleep(0.5)
+                conn.sendall(full_data)
+                conn.close()
+                exit(0)
 
 if __name__ == "__main__":
     main()
